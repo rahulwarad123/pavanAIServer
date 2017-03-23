@@ -187,7 +187,25 @@ function intentHandlers(body) {
                     deferred.resolve(responseInfo);
                 });
             break;
-        
+        case "AOS-RETRIEVE-EMAIL-YES":
+            handleRetrieveQuoteEmailYes(body, deferred)
+                .then(function (responseInfo) {
+                    deferred.resolve(responseInfo);
+                });
+            break;
+        case "AOS-RETRIEVE-EMAIL-NO":
+            handleRetrieveQuoteEmailNo(body, deferred)
+                .then(function (responseInfo) {
+                    deferred.resolve(responseInfo);
+                });
+            break;
+        case "AOS-RETRIEVE-EMAIL-SEND":
+            handleRetrieveQuoteEmailSend(body, deferred)
+                .then(function (responseInfo) {
+                    deferred.resolve(responseInfo);
+                });
+            break;
+
         case "GET-LOCATION-PERMISSION":
             var permissionGranted = isPermissionGranted(body);
             handleGetLocationPermission(body, deferred, permissionGranted)
@@ -726,6 +744,60 @@ function handlerAOSRetrieveZipCode(body, deferred) {
     return deferred.promise;
 }
 
+function handleRetrieveQuoteEmailYes(body, deferred) {
+    var retrieveSpeechResp = {};
+    var result = body.result;
+    var retrieveCntx = result.contexts.find(function (curCntx) { return curCntx.name === "aos-retv"; });
+    var sessionAttrs = getRetrieveQuoteSessionAttributes(retrieveCntx);
+
+
+    aos.handleRetrieveQuoteEmailYesIntent(sessionAttrs)
+        .then(function (retrieveQuoteSpeechResponse) {
+            retrieveSpeechResp.speech = retrieveQuoteSpeechResponse.speechOutput.text;
+            retrieveSpeechResp.displayText = retrieveQuoteSpeechResponse.speechOutput.text;
+            deferred.resolve(retrieveSpeechResp);
+        });
+
+    return deferred.promise;
+}
+
+function handleRetrieveQuoteEmailNo(body, deferred) {
+    var retrieveSpeechResp = {};
+    var result = body.result;
+    var retrieveCntx = result.contexts.find(function (curCntx) { return curCntx.name === "aos-retv"; });
+    var sessionAttrs = getRetrieveQuoteSessionAttributes(retrieveCntx);
+
+
+    aos.handleAgentFindEmailNoIntent(sessionAttrs)
+        .then(function (retrieveQuoteSpeechResponse) {
+            retrieveSpeechResp.speech = retrieveQuoteSpeechResponse.speechOutput.text;
+            retrieveSpeechResp.displayText = retrieveQuoteSpeechResponsess.speechOutput.text;
+            deferred.resolve(retrieveSpeechResp);
+        });
+
+    return deferred.promise;
+
+}
+
+function handleRetrieveQuoteEmailSend(body, deferred) {
+    var retrieveSpeechResp = {};
+    var result = body.result;
+    var retrieveCntx = result.contexts.find(function (curCntx) { return curCntx.name === "aos-retv"; });
+    var sessionAttrs = getRetrieveQuoteSessionAttributes(retrieveCntx);
+
+    console.log("handleRetrieveQuoteEmailSend - start");
+
+    aos.handleRetrieveQuoteEmailSendIntent(sessionAttrs)
+        .then(function (retrieveQuoteSpeechResponse) {
+            retrieveSpeechResp.speech = retrieveQuoteSpeechResponse.speechOutput.text;
+            retrieveSpeechResp.displayText = retrieveQuoteSpeechResponse.speechOutput.text;
+            console.log("handleRetrieveQuoteEmailSend - end");
+            deferred.resolve(retrieveSpeechResp);
+        });
+
+    return deferred.promise;
+}
+
 function getRetrieveQuoteSessionAttributes(contextInfo) {
     var sessionQuoteAttrs = { "zipcode": undefined, "email": undefined, "lastname": undefined, "dob": undefined, "quotedetails": {} };
     if (contextInfo) {
@@ -752,6 +824,7 @@ function getRetrieveQuoteSessionAttributes(contextInfo) {
 
     return sessionQuoteAttrs;
 }
+
 
 //#endregion 
 

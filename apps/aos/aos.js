@@ -349,6 +349,62 @@ AOS.prototype.handleRetrieveQuoteZipCode = function (sessionAttrs) {
     }
     return deferred.promise;
 };
+
+AOS.prototype.handleRetrieveQuoteEmailYesIntent = function (sessionAttrs) {
+    var deferred = q.defer();
+    var retrieveQuoteSpeechResp = new SpeechResponse();
+    var speechOutput = new Speech();
+    var repromptOutput = new Speech();
+
+    if (sessionAttrs.email) {
+        getFinalRetrieveQuoteSendEmailResponse(sessionAttrs)
+            .then(function (retrieveQuoteSpeechOutput) {
+                retrieveQuoteSpeechResp.speechOutput = retrieveQuoteSpeechOutput;
+                retrieveQuoteSpeechResp.repromptOutput = null;
+                deferred.resolve(retrieveQuoteSpeechResp);
+            });
+    } else {
+        speechOutput.text = Utilities.GetRandomValue(EMAILRESP);
+        repromptOutput.text = Utilities.GetRandomValue(EMAILRESP);
+        retrieveQuoteSpeechResp.speechOutput = speechOutput;
+        retrieveQuoteSpeechResp.repromptOutput = repromptOutput;
+        deferred.resolve(retrieveQuoteSpeechResp);
+    }
+
+
+    return deferred.promise;
+};
+
+AOS.prototype.handleRetrieveQuoteEmailNoIntent = function (sessionAttrs) {
+    var deferred = q.defer();
+    var retrieveQuoteSpeechResp = new SpeechResponse();
+    var speechOutput = new Speech();
+
+    speechOutput.text = "Thank you for chosing Allstate. You are in Good Hands.";
+    retrieveQuoteSpeechResp.speechOutput = speechOutput;
+    retrieveQuoteSpeechResp.repromptOutput = null;
+    deferred.resolve(retrieveQuoteSpeechResp);
+
+    return deferred.promise;
+};
+
+AOS.prototype.handleRetrieveQuoteEmailSendIntent = function (sessionAttrs) {
+    var deferred = q.defer();
+    var retrieveQuoteSpeechResp = new SpeechResponse();
+    var speechOutput = new Speech();
+    var repromptOutput = new Speech();
+
+    getFinalRetrieveQuoteSendEmailResponse(sessionAttrs)
+        .then(function (retrieveQuoteSpeechOutput) {
+            retrieveQuoteSpeechResp.speechOutput = retrieveQuoteSpeechOutput;
+            retrieveQuoteSpeechResp.repromptOutput = null;
+            deferred.resolve(retrieveQuoteSpeechResp);
+        });
+
+
+    return deferred.promise;
+
+};
 //#endregion
 
 //#endregion
@@ -528,7 +584,7 @@ function retrieveSpeachOutText(quotes) {
     if(quotes) {
         if(quotes.length == 1) {        
             if(quotes[0].policyNumber){
-                textOut = "You have a," + quotes[0].product + "policy with policy number," + quotes[0].policyNumber
+                textOut = "You have a " + quotes[0].product + " policy with policy number," + quotes[0].policyNumber
                     +" and the policy was purchased on," + quotes[0].startDate;
             }             
     }
@@ -546,8 +602,49 @@ function retrieveSpeachOutText(quotes) {
         textOut = "I see that you do not have any purchased policies with these inputs.";
     }
     return textOut;
+};
+
+function getFinalRetrieveQuoteSendEmailResponse(sessionAttrs) {
+    var deferred = q.defer();
+    var finalSpeechOutput = new Speech();
+    var to = sessionAttrs.email;
+    var subject = "Allstate policy details " ;
+    var body = buildRetrieveQuoteEmailBody(sessionAttrs.quotedetails, to);
+    Utilities.sendEmail(to, subject, body)
+        .then(function (emailStatus) {
+            if (emailStatus) {
+                finalSpeechOutput.text = "We have sent an email with all the details. Thank you, for choosing Allstate.";
+            } else {
+                finalSpeechOutput.text = "Sorry! there was a problem while sending the email to you. Please try again later.";
+            }
+            deferred.resolve(finalSpeechOutput);
+        })
+
+
+    return deferred.promise;
 }
 
+function buildRetrieveQuoteEmailBody(policiesInfo, to) {
+    var emailBody = "";
+ 
+    emailBody = emailBody + "\nThank you for your purchasing Allstate insurance.\n"
+    if(policiesInfo){
+        for (var index = 0; index < policiesInfo.length; index++) {
+                emailBody = emailBody + "\nBelow are details you requested regarding: " + policiesInfo[index].policyNumber;
+                emailBody = emailBody + "\n-------------------------------------------------------";
+                emailBody = emailBody + "\Product: " + policiesInfo[index].product;
+                emailBody = emailBody + "\nPurchased On: " + policiesInfo[index].startDate;
+                emailBody = emailBody + "\nAssociated Agent Name: " + policiesInfo[index].agentName;
+                emailBody = emailBody + "\nAssociated Agent Phone number: " + policiesInfo[index].agentPhoneNumber;                       
+                emailBody = emailBody + "\nAssociated Agent Email address: " + policiesInfo[index].agentEmailAddress;
+                emailBody = emailBody + "\n-------------------------------------------------------";
+                emailBody = emailBody + "\n-------------------------------------------------------";                                              
+            }
+        
+    }  
+
+    return emailBody;
+}
 //#endregion
 //#endregion
 
