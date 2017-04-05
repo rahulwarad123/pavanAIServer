@@ -136,7 +136,7 @@ var dateUtil = (function () {
                     if (dayPart.toString().length === 1) {
                         dayPart = "0" + dayPart;
                     }
-                    strFormattedDt = monthPart + dayPart + yearPart;
+                    strFormattedDt = String(monthPart) + String(dayPart) + String(yearPart);
                     break;
                 default:
                     strFormattedDt = strDate;
